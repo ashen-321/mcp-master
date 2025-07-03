@@ -1,0 +1,32 @@
+[project]
+name = "mcp-master"
+version = "0.0.1"
+authors = [
+  { name="Aaron Shen", email="aaron.shen321@gmail.com" },
+]
+keywords = ["git", "mcp", "llm", "automation"]
+description = "A Python package for master MCP servers."
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "fastmcp>=2.8.1",
+    "mcp>=1.9.4",
+    "starlette>=0.46.1",
+    "uvicorn>=0.34.0",
+    "langchain-openai>=0.3.12",
+    "langgraph>=0.3.27",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/ashen-321/mcp-master/"
+Issues = "https://github.com/ashen-321/mcp-master/issues"
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
