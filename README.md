@@ -3,7 +3,7 @@ A Python package for master MCP servers.
 
 <div align="center">
 
-<strong>Python implementation of the Model Context Protocol (MCP)</strong>
+<strong>Python implementation of master MCP servers.</strong>
 
 [![PyPI][pypi-badge]][pypi-url]
 [![MIT licensed][mit-badge]][mit-url]
