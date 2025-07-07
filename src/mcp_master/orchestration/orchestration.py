@@ -1,14 +1,10 @@
 from langgraph.graph import StateGraph, END
-import logging
 
 from agents import *
 from agent_protocol import MultiAgentState
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
-class Orchestration():
+class Orchestration:
     def __init__(self):
         self.orch = StateGraph(MultiAgentState)
 

@@ -38,9 +38,10 @@ from agents import set_agent_config
 
 TOOL_NAME_ORIGIN_SEPARATOR = '09090'
 MASTER_TOOL_DESCRIPTION_HEADER = 'Automatically interface with other MCP servers for the following tools:'
-MASTER_DISPATCHER_SYSTEM_HEADER = ("You are a tool dispatcher agent who decides which tools to dispatch to based on "
-                                   "the user's input. Depending on your answer, question will be routed to the right "
-                                   "tools, so your task is crucial.")
+MASTER_DISPATCHER_SYSTEM_HEADER = (
+    "You are a tool dispatcher agent who decides which tools to dispatch to based on the user's input. Depending on "
+    "your answer, question will be routed to the right tools, so your task is crucial."
+)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -52,16 +53,26 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 class MasterServerClient:
-    """MCP Client for interacting with an MCP Streamable HTTP server"""
-
     def __init__(self, app):
-        # Initialize session and client objects
+        # All streamable-http sessions by server_filename
         self.sessions = {}
+
+        # All streamable-http streams by server_filename
         self._streams_contexts = {}
+
+        # All streamable-http contexts by server_filename
         self._session_contexts = {}
+
+        # Available tools from each server
         self.available_tools = {}
+
+        # self.available_tools,  disregarding what server each tool is served from
         self.available_tools_flattened = []
+
+        # Popens used to start local sub servers automatically
         self._sub_server_popens = {}
+
+        # FastMCP app
         self._app = app
 
     async def check_if_server_running(self, server_url: str, server_filename: str):
@@ -69,7 +80,7 @@ class MasterServerClient:
             # Send request to see if the server is already running
             async with httpx.AsyncClient(timeout=30.0) as client:
                 logging.info(f"HTTP GET attempt to {server_url}")
-                
+
                 response = await client.get(server_url)
                 response.raise_for_status()
 
@@ -77,23 +88,29 @@ class MasterServerClient:
                 return True
 
         except httpx.HTTPStatusError:
-            # Exit if sent a redirect error (normal behavior)
+            # Exit if sent a redirect error (standard behavior)
             return True
-                
+
         except (httpx.TimeoutException, httpx.ConnectError) as e:
             logging.warning(f"HTTP request attempt failed: {type(e).__name__}: {e}")
 
-            # Exit if the server is not present in the folder
-            os.chdir(file_path)
-            server_path = os.path.normpath(os.path.join(file_path, f'{server_filename}.py'))
+            # Exit if the server_path is not absolute
+            server_dir = os.path.join(gconfig.get('autostart_abspath'))
+            os.chdir(server_dir)
+            if not os.path.isabs(server_dir):
+                logging.info(f"{server_dir} is not an absolute path.")
+                return False
 
+            # Exit if the server is not present in the folder
+            server_path = os.path.normpath(os.path.join(server_dir, f'{server_filename}.py'))
             if not os.path.exists(server_path):
+                logging.info(f"Unable to find server {server_filename} in {server_path}.")
                 return False
 
             # Run start command to start the server
             logging.info(f"Sending start command for {server_filename}...")
-            # No temporary variable to avoid deep copying
-            self._sub_server_popens[server_filename] = Popen(['python', f'{server_filename}.py'])
+            start_popen = Popen(['python', f'{server_filename}.py'])
+            self._sub_server_popens[server_filename] = start_popen
 
             # Wait for the server to start, abort after 10 seconds
             attempt_count = 1
@@ -101,29 +118,29 @@ class MasterServerClient:
                 while True:
                     try:
                         logging.debug(f"HTTP GET attempt to {server_url}")
-                        
+
                         response = await client.get(server_url)
                         response.raise_for_status()
-            
+
                         # Exit if running
                         return True
-                        
+
                     except (httpx.TimeoutException, httpx.ConnectError) as e:
                         # Try again in 0.5 seconds if the request failed
                         logging.warning(f"HTTP request attempt {attempt_count} failed: {type(e).__name__}: {e}")
                         logging.info(f"Waiting 0.5 seconds...")
                         attempt_count += 1
                         await asyncio.sleep(0.5)
-                        
+
                     except (httpx.HTTPStatusError) as e:
                         # Exit if sent a redirect error (normal behavior)
                         return True
-                        
+
                     except Exception as e:
                         # Abort if an unusual error is caught
                         logging.error(f"Unexpected error in HTTP request: {e}")
                         return False
-                
+
         except Exception as e:
             # Abort if an unusual error is caught
             logging.error(f"Unexpected error in HTTP request: {e}")
@@ -135,21 +152,23 @@ class MasterServerClient:
         if not await self.check_if_server_running(server_url, server_filename):
             logging.error(f"Failed to connect to server {server_filename} at {server_url}.")
             return
-        
-        # No temporary variables to avoid deep copying every single instance
-        self._streams_contexts[server_filename] = streamablehttp_client(url=server_url, headers=headers)
-        read_stream, write_stream, _ = await self._streams_contexts[server_filename].__aenter__()
 
-        self._session_contexts[server_filename] = ClientSession(read_stream, write_stream)
-        self.sessions[server_filename] = await self._session_contexts[server_filename].__aenter__()
+        # Initialize client and session
+        client = streamablehttp_client(url=server_url, headers=headers)
+        self._streams_contexts[server_filename] = client
+        read_stream, write_stream, _ = await client.__aenter__()
+
+        session = ClientSession(read_stream, write_stream)
+        self._session_contexts[server_filename] = session
+        self.sessions[server_filename] = await session.__aenter__()
 
         await self.sessions[server_filename].initialize()
 
-        # Save tools to class data
+        # Save the sub server's available tools
         await self.get_available_tools(server_filename)
 
         logging.info(f"Connected to server {server_filename} at {server_url}.")
-    
+
     async def get_available_tools(self, server_filename: str):
         """Get available tools from the server"""
         try:
@@ -157,7 +176,7 @@ class MasterServerClient:
             logging.info(f"Fetching available server tools from {server_filename}...")
             response = await self.sessions[server_filename].list_tools()
             logging.info(f"Connected to MCP server {server_filename} with tools {[tool.name for tool in response.tools]}.")
-    
+
             # Format tools for OpenAI
             available_tools = [
                 {
@@ -178,10 +197,10 @@ class MasterServerClient:
 
             # Compile tool descriptions into the master server tool description
             self.compile_tool_descriptions()
-            
+
         except Exception as e:
             logging.error(f'Tool fetch for server {server_filename} failed: {e}')
-            
+
             # Blank list failsafe in case the tool fetch fails
             self.available_tools[server_filename] = []
 
@@ -204,7 +223,7 @@ class MasterServerClient:
         # Save dispatcher node system message to orchestration
         dispatcher_system_message += "Always call at least one tool. Do not attempt to generate your own response to the user's query."
         set_agent_config({'dispatcher_system_message': dispatcher_system_message})
-                
+
     async def call_tool(self, tool_name: str, tool_args: Optional[dict]):
         tool_name, server_filename = tool_name.split(TOOL_NAME_ORIGIN_SEPARATOR)
         logging.info(f"Calling tool {tool_name} from {server_filename} with args {tool_args}...")
@@ -217,9 +236,9 @@ class MasterServerClient:
             # Remove tool from server tool list
             if tool_name in self.available_tools[server_filename]:
                 self.available_tools[server_filename].remove(tool_name)
-            
+
             logging.error(f"Tool {tool_name} from {server_filename} is currently unavailable:")
-            # raise Exception(e)
+            raise Exception(e)
 
     async def server_loop(self):
         while True:
@@ -233,11 +252,11 @@ class MasterServerClient:
         if self._sub_server_popens:
             for popen_id in self._sub_server_popens:
                 self._sub_server_popens[popen_id].terminate()
-                
+
         if self._session_contexts:
             for context_id in self._session_contexts:
                 await self._session_contexts[context_id].__aexit__(None, None, None)
-                
+
         if self._streams_contexts:
             for context_id in self._session_contexts:
                 await self._streams_contexts[context_id].__aexit__(None, None, None)

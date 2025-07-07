@@ -62,7 +62,10 @@ def startup():
         return
 
     started = True
-    app.run(transport="streamable-http",host="0.0.0.0",port=8092)
+    try:
+        app.run(transport="streamable-http", host="0.0.0.0", port=8092)
+    finally:
+        logging.info('Shutting down server test_server_2...')
 
 if __name__ == '__main__':
     startup()

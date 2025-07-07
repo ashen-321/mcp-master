@@ -67,10 +67,13 @@ set_config({
 
 # Create an MCP server on port 3000 with two test servers
 # Ensure both test servers are running by starting them in the terminal before starting master_server.py
-server = MasterMCPServer(3000, [
+server = MasterMCPServer(
+  port=3000,
+  sub_servers=[
     ("http://localhost:8091/mcp", 'test_server_1'),
     ("http://localhost:8092/mcp", 'test_server_2')
-])
+  ]
+)
 asyncio.run(server.startup())
 ```
 

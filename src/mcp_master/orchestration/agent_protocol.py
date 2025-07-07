@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+
 class MultiAgentState(TypedDict):
     question: str
     external_data: list

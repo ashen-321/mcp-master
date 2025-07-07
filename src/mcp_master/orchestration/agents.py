@@ -16,7 +16,7 @@ for module_path in module_paths:
     full_path = os.path.normpath(os.path.join(file_path, module_path))
     sys.path.append(full_path)
 
-from config import gconfig
+from config import *
 
 
 # --------------------------------------------------------------------------------------------
@@ -27,19 +27,18 @@ from config import gconfig
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Model IDs
-model_id_c37 = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
-model_id_c35 = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
-model_id_nova = "us.amazon.nova-lite-v1:0"
-model_id_llama = "meta.llama3-3-70b-instruct-v1:0"
-
 config = {
-    'model_id': model_id_nova,
-    'internal_file_path': '',
+    'model_id': None,
     'tools': [],
     'master_server_client': None,
     'dispatcher_system_message': '',
 }
+
+model_id = gconfig.get('selector_model_id')
+if model_id is None:
+    raise ConfigError('Ensure your selector_model_id is properly configured via set_config().')
+
+config['model_id'] = model_id
 
 
 def set_agent_config(options: dict):

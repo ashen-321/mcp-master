@@ -136,7 +136,11 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
         ],
     )
 
-app.run(transport="streamable-http",host="0.0.0.0",port=8090)
+
+try:
+    app.run(transport="streamable-http", host="0.0.0.0", port=8090)
+finally:
+    logging.info('Shutting down server medrxiv_server...')
 '''
 if __name__ == "__main__":
     mcp_server = app._mcp_server  # noqa: WPS437

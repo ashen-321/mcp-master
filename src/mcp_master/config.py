@@ -1,8 +1,12 @@
+import os
+
 gconfig = {
-    'judge_model_id': None,
-    'judge_model_service_url': None,
-    'OPENAI_API_KEY': None,
-    'OPENAI_BASE_URL': None,
+    'selector_model_id': 'None',
+    'judge_model_id': 'None',
+    'judge_model_service_url': 'None',
+    'OPENAI_API_KEY': 'None',
+    'OPENAI_BASE_URL': 'None',
+    'autostart_abspath': os.path.normpath(os.path.join(os.path.abspath(__file__), '../demo-servers')), # Defaulted to ../demo-servers
 }
 
 

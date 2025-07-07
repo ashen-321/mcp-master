@@ -15,7 +15,6 @@ def openai_url_invoke(model_id: str, user_query: str, prompt: str,
     if service_url is None:
         raise ConfigError('Ensure your judge_model_service_url is properly configured via set_config().')
 
-
     print(f'Invoking model "{model_id}" from "{service_url}"...')
 
     client = OpenAI(

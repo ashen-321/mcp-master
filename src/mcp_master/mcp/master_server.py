@@ -98,15 +98,21 @@ class MasterMCPServer:
             pass
 
     async def run_app(self):
-        await self.app.run_async(transport="streamable-http", host="0.0.0.0", port=self.port)
+        try:
+            await self.app.run_async(transport="streamable-http", host="0.0.0.0", port=self.port)
+        finally:
+            logging.info('Shutting down master MCP server...')
 
     async def startup(self):
         await asyncio.gather(self.initialize_interserver_comms(), self.run_app())
 
 
 if __name__ == "__main__":
-    server = MasterMCPServer(3000, [
-        ("http://localhost:8091/mcp", 'test_server_1'),
-        ("http://localhost:8092/mcp", 'test_server_2')
-    ])
+    server = MasterMCPServer(
+        port=3000,
+        sub_servers=[
+            ("http://localhost:8091/mcp", 'test_server_1'),
+            ("http://localhost:8092/mcp", 'test_server_2')
+        ]
+    )
     asyncio.run(server.startup())
