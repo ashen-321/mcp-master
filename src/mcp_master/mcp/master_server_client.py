@@ -2,33 +2,23 @@ from typing import Optional
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 import os
-import sys
 import asyncio
 import httpx
 import logging
 from subprocess import Popen
 
-model_id_c37 = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
-model_id_nova = "us.amazon.nova-lite-v1:0"
-model_id_llama = "meta.llama3-3-70b-instruct-v1:0"
+from config import global_config as gconfig
+from config import ConfigError
 
-module_paths = ["./", "../", "../orchestration"]
-file_path = os.path.dirname(__file__)
-os.chdir(file_path)
-
-for module_path in module_paths:
-    full_path = os.path.normpath(os.path.join(file_path, module_path))
-    sys.path.append(full_path)
-
-from config import *
+print(gconfig.judge_model_id)
 
 try:
-    os.environ["OPENAI_API_KEY"] = api_key = gconfig.get('OPENAI_API_KEY')
-    os.environ["OPENAI_BASE_URL"] = base_url = gconfig.get("OPENAI_BASE_URL")
+    os.environ["OPENAI_API_KEY"] = api_key = gconfig.OPENAI_API_KEY
+    os.environ["OPENAI_BASE_URL"] = base_url = gconfig.OPENAI_BASE_URL
 except TypeError as e:
     raise ConfigError("Ensure your OPENAI_API_KEY and OPENAI_BASE_URL are properly configured via set_config().")
 
-from agents import set_agent_config
+from agents import config as agent_config
 
 
 # --------------------------------------------------------------------------------------------
@@ -95,7 +85,7 @@ class MasterServerClient:
             logging.warning(f"HTTP request attempt failed: {type(e).__name__}: {e}")
 
             # Exit if the server_path is not absolute
-            server_dir = os.path.join(gconfig.get('autostart_abspath'))
+            server_dir = os.path.join(gconfig.autostart_abspath)
             os.chdir(server_dir)
             if not os.path.isabs(server_dir):
                 logging.info(f"{server_dir} is not an absolute path.")
@@ -222,7 +212,7 @@ class MasterServerClient:
 
         # Save dispatcher node system message to orchestration
         dispatcher_system_message += "Always call at least one tool. Do not attempt to generate your own response to the user's query."
-        set_agent_config({'dispatcher_system_message': dispatcher_system_message})
+        agent_config.dispatcher_system_message = dispatcher_system_message
 
     async def call_tool(self, tool_name: str, tool_args: Optional[dict]):
         tool_name, server_filename = tool_name.split(TOOL_NAME_ORIGIN_SEPARATOR)

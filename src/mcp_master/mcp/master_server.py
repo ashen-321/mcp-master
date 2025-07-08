@@ -6,20 +6,10 @@ from starlette.requests import Request
 from starlette.applications import Starlette
 from mcp.server.sse import SseServerTransport
 from starlette.routing import Mount, Route
-import os
-import sys
-
-module_paths = ["./", "../orchestration"]
-file_path = os.path.dirname(__file__)
-os.chdir(file_path)
-
-for module_path in module_paths:
-    full_path = os.path.normpath(os.path.join(file_path, module_path))
-    sys.path.append(full_path)
 
 from master_server_client import MasterServerClient
 from orchestration import Orchestration
-from agents import set_agent_config
+from agents import config as agent_config
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -47,10 +37,8 @@ class MasterMCPServer:
         async def access_sub_mcp(query: str):
             logging.info(f'Collecting tool information for query: {query}')
 
-            set_agent_config({
-                "tools": self.master_server_client.available_tools_flattened,
-                "master_server_client": self.master_server_client
-            })
+            agent_config.tools = self.master_server_client.available_tools_flattened
+            agent_config.master_server_client = self.master_server_client
 
             result = await self.orch.graph.ainvoke(
                 {"question": query},

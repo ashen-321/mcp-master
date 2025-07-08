@@ -54,25 +54,24 @@ A simple master MCP server that connects to two of the included demo servers:
 
 ```python
 # master_server.py
-from mcp_master import MasterMCPServer
+from src.mcp_master import MasterMCPServer
+from src.mcp_master import global_config as gconfig
 import asyncio
 from os import getenv
 
-set_config({
-    'judge_model_id': "us.anthropic.claude-3-5-haiku-20241022-v1:0",
-    'judge_model_service_url': '', # Set this to where your judge LLM is hosted
-    'OPENAI_API_KEY': getenv('OPENAI_API_KEY'), 
-    'OPENAI_BASE_URL': getenv('OPENAI_BASE_URL'), # Set this to where your other LLMs will be hosted
-})
+gconfig.judge_model_id = ''  # Set this to your judge model ID
+gconfig.judge_model_service_url = ''  # Set this to where your judge LLM is hosted
+gconfig.OPENAI_API_KEY = getenv('OPENAI_API_KEY')
+gconfig.OPENAI_BASE_URL = getenv('OPENAI_BASE_URL')  # Set this to where your other LLMs will be hosted
 
 # Create an MCP server on port 3000 with two test servers
-# Ensure both test servers are running by starting them in the terminal before starting master_server.py
+# Ensure both test servers are running by starting them in the terminal before starting demo_master_server.py
 server = MasterMCPServer(
-  port=3000,
-  sub_servers=[
-    ("http://localhost:8091/mcp", 'test_server_1'),
-    ("http://localhost:8092/mcp", 'test_server_2')
-  ]
+    port=3000,
+    sub_servers=[
+        ("http://localhost:8091/mcp", 'test_server_1'),
+        ("http://localhost:8092/mcp", 'test_server_2')
+    ]
 )
 asyncio.run(server.startup())
 ```

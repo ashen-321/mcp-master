@@ -1,7 +1,7 @@
-from typing import TypedDict
+from pydantic import BaseModel
 
 
-class MultiAgentState(TypedDict):
+class MultiAgentState(BaseModel):
     question: str
     external_data: list
     external_summaries: list

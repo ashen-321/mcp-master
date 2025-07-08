@@ -1,18 +1,30 @@
 import os
-
-gconfig = {
-    'selector_model_id': 'None',
-    'judge_model_id': 'None',
-    'judge_model_service_url': 'None',
-    'OPENAI_API_KEY': 'None',
-    'OPENAI_BASE_URL': 'None',
-    'autostart_abspath': os.path.normpath(os.path.join(os.path.abspath(__file__), '../demo-servers')), # Defaulted to ../demo-servers
-}
+from pydantic import BaseModel
 
 
-def set_config(options: dict):
-    for key in options:
-        gconfig[key] = options[key]
+class GlobalConfig(BaseModel):
+    # Tool selection model ID
+    selector_model_id: str = ''
+
+    # Selection judge model ID
+    judge_model_id: str = ''
+
+    # Judge service URL
+    judge_model_service_url: str = ''
+
+    # OpenAI API Key
+    OPENAI_API_KEY: str = ''
+
+    # OpenAI Base URL
+    OPENAI_BASE_URL: str = ''
+
+    # Autostart path for locally available servers, defaulted to ../../../examples/demo-servers
+    autostart_abspath: str = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), '..', '..', 'examples', 'demo-servers')
+    )
+
+
+global_config = GlobalConfig()
 
 
 class ConfigError(Exception):
