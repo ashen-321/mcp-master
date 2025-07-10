@@ -9,14 +9,6 @@ from subprocess import Popen
 from contextlib import AsyncExitStack
 
 from src.mcp_master.config import global_config as gconfig
-from src.mcp_master.config import ConfigError
-
-try:
-    os.environ["OPENAI_API_KEY"] = api_key = gconfig.OPENAI_API_KEY
-    os.environ["OPENAI_BASE_URL"] = base_url = gconfig.OPENAI_BASE_URL
-except TypeError as e:
-    raise ConfigError("Ensure your OPENAI_API_KEY and OPENAI_BASE_URL are properly configured via set_config().")
-
 from src.mcp_master.orchestration.agents import config as agent_config
 
 

@@ -1,4 +1,4 @@
-from langchain_openai import ChatOpenAI
+import os
 from openai import OpenAI
 import logging
 from asyncio import gather
@@ -10,7 +10,6 @@ from .agent_protocol import MultiAgentState
 from src.mcp_master.config import global_config as gconfig
 from src.mcp_master.config import ConfigError
 
-
 # --------------------------------------------------------------------------------------------
 # Config -------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------
@@ -18,6 +17,7 @@ from src.mcp_master.config import ConfigError
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 class Config(BaseModel):
     model_id: str = '',
@@ -28,14 +28,8 @@ class Config(BaseModel):
 
 config = Config()
 
-model_id = gconfig.selector_model_id
-if model_id is None or len(model_id) == 0:
-    raise ConfigError('Ensure your selector_model_id is properly configured via set_config().')
-
-config.model_id = model_id
-
 # OpenAI chat client
-openai_client = OpenAI()
+openai_client = None
 
 
 # --------------------------------------------------------------------------------------------
@@ -44,7 +38,32 @@ openai_client = OpenAI()
 
 
 async def tools_selector_node(state: MultiAgentState):
+    global openai_client
+
     logging.info(f'Selecting tools from {[tool['function']['name'] for tool in config.tools]}...')
+
+    # Exit for invalid selector_model_id values
+    config.model_id = gconfig.selector_model_id
+    if config.model_id is None or len(config.model_id) == 0:
+        raise ConfigError(f'Ensure your selector_model_id is properly configured via set_config(). It is currently {config.model_id}.')
+
+    # Exit for invalid API key
+    if gconfig.OPENAI_API_KEY is None or len(gconfig.OPENAI_API_KEY) == 0:
+        raise ConfigError(f'Ensure your OPENAI_API_KEY is properly configured via set_config(). It is currently {gconfig.OPENAI_API_KEY}.')
+    os.environ["OPENAI_API_KEY"] = gconfig.OPENAI_API_KEY
+
+    # Exit for empty API key
+    if gconfig.OPENAI_BASE_URL is not None:
+        if len(gconfig.OPENAI_BASE_URL) == 0:
+            raise ConfigError(
+                f'Ensure your OPENAI_BASE_URL is properly configured via set_config(). It is currently empty.')
+
+        # Save API key to environment variables
+        os.environ["OPENAI_BASE_URL"] = gconfig.OPENAI_BASE_URL
+
+    # Initialize openAI chat client
+    if openai_client is None:
+        openai_client = OpenAI()
 
     # Select tools
     messages = [
