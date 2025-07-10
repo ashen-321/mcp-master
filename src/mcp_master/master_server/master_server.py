@@ -7,9 +7,9 @@ from starlette.applications import Starlette
 from mcp.server.sse import SseServerTransport
 from starlette.routing import Mount, Route
 
-from master_server_client import MasterServerClient
-from orchestration import Orchestration
-from agents import config as agent_config
+from .master_server_client import MasterServerClient
+from src.mcp_master.orchestration import Orchestration
+from src.mcp_master.orchestration.agents import config as agent_config
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -81,6 +81,8 @@ class MasterMCPServer:
                 await self.master_server_client.connect_to_server(*server)
 
             await self.master_server_client.server_loop()
+        except KeyboardInterrupt:
+            pass
         finally:
             await self.master_server_client.cleanup()
             pass
@@ -88,11 +90,19 @@ class MasterMCPServer:
     async def run_app(self):
         try:
             await self.app.run_async(transport="streamable-http", host="0.0.0.0", port=self.port)
-        finally:
-            logging.info('Shutting down master MCP server...')
+        except KeyboardInterrupt:
+            pass
 
-    async def startup(self):
+    async def _startup(self):
         await asyncio.gather(self.initialize_interserver_comms(), self.run_app())
+
+    def startup(self):
+        try:
+            asyncio.run(self._startup())
+        except KeyboardInterrupt:
+            pass
+        finally:
+            logging.info('Master MCP server successfully shut down.')
 
 
 if __name__ == "__main__":

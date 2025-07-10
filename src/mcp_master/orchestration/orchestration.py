@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END
 
-from agents import *
-from agent_protocol import MultiAgentState
+from .agents import *
+from .agent_protocol import MultiAgentState
 
 
 class Orchestration:

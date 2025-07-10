@@ -17,4 +17,4 @@ server = MasterMCPServer(
         ("http://localhost:8092/mcp", 'test_server_2')
     ]
 )
-asyncio.run(server.startup())
+server.startup()

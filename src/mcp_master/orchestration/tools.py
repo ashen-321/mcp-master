@@ -1,5 +1,5 @@
 from openai import OpenAI
-from config import ConfigError
+from src.mcp_master.config import ConfigError
 
 
 # --------------------------------------------------------------------------------------------
@@ -10,9 +10,9 @@ from config import ConfigError
 def openai_url_invoke(model_id: str, user_query: str, prompt: str,
                       system_prompt: str = 'You are a seasoned expert.', service_url: str = '', max_token: int = 10240,
                       temperature: float = 0.05, top_p: float = 0.9):
-    if model_id is None:
+    if model_id is None or len(model_id) == 0:
         raise ConfigError('Ensure your judge_model_id is properly configured via set_config().')
-    if service_url is None:
+    if service_url is None or len(service_url) == 0:
         raise ConfigError('Ensure your judge_model_service_url is properly configured via set_config().')
 
     print(f'Invoking model "{model_id}" from "{service_url}"...')

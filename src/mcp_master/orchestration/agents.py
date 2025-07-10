@@ -5,10 +5,10 @@ from asyncio import gather
 from pydantic import BaseModel
 from typing import Any
 
-from tools import openai_url_invoke
-from agent_protocol import MultiAgentState
-from config import global_config as gconfig
-from config import ConfigError
+from .tools import openai_url_invoke
+from .agent_protocol import MultiAgentState
+from src.mcp_master.config import global_config as gconfig
+from src.mcp_master.config import ConfigError
 
 
 # --------------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ class Config(BaseModel):
 config = Config()
 
 model_id = gconfig.selector_model_id
-if model_id is None:
+if model_id is None or len(model_id) == 0:
     raise ConfigError('Ensure your selector_model_id is properly configured via set_config().')
 
 config.model_id = model_id

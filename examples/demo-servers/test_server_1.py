@@ -64,9 +64,11 @@ def startup():
 
     started = True
     try:
-        app.run(transport="streamable-http",host="0.0.0.0",port=8091)
+        app.run(transport="streamable-http", host="0.0.0.0", port=8091)
+    except KeyboardInterrupt:
+        pass
     finally:
-        logging.info('Shutting down server test_server_1...')
+        logging.info('Server test_server_1 successfully shut down.')
 
 if __name__ == '__main__':
     startup()

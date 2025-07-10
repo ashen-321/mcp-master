@@ -7,10 +7,8 @@ import httpx
 import logging
 from subprocess import Popen
 
-from config import global_config as gconfig
-from config import ConfigError
-
-print(gconfig.judge_model_id)
+from src.mcp_master.config import global_config as gconfig
+from src.mcp_master.config import ConfigError
 
 try:
     os.environ["OPENAI_API_KEY"] = api_key = gconfig.OPENAI_API_KEY
@@ -18,7 +16,7 @@ try:
 except TypeError as e:
     raise ConfigError("Ensure your OPENAI_API_KEY and OPENAI_BASE_URL are properly configured via set_config().")
 
-from agents import config as agent_config
+from src.mcp_master.orchestration.agents import config as agent_config
 
 
 # --------------------------------------------------------------------------------------------
@@ -122,7 +120,7 @@ class MasterServerClient:
                         attempt_count += 1
                         await asyncio.sleep(0.5)
 
-                    except (httpx.HTTPStatusError) as e:
+                    except httpx.HTTPStatusError:
                         # Exit if sent a redirect error (normal behavior)
                         return True
 
