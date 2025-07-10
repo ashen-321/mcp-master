@@ -6,6 +6,7 @@ import asyncio
 import httpx
 import logging
 from subprocess import Popen
+from contextlib import AsyncExitStack
 
 from src.mcp_master.config import global_config as gconfig
 from src.mcp_master.config import ConfigError
@@ -62,6 +63,9 @@ class MasterServerClient:
 
         # FastMCP app
         self._app = app
+
+        #
+        self._exit_stack = AsyncExitStack()
 
     async def check_if_server_running(self, server_url: str, server_filename: str):
         try:
@@ -142,13 +146,14 @@ class MasterServerClient:
             return
 
         # Initialize client and session
-        client = streamablehttp_client(url=server_url, headers=headers)
+        client = await self._exit_stack.enter_async_context(streamablehttp_client(url=server_url, headers=headers))
         self._streams_contexts[server_filename] = client
-        read_stream, write_stream, _ = await client.__aenter__()
+        print(client)
+        read_stream, write_stream, _ = client
 
-        session = ClientSession(read_stream, write_stream)
+        session = await self._exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
         self._session_contexts[server_filename] = session
-        self.sessions[server_filename] = await session.__aenter__()
+        self.sessions[server_filename] = session
 
         await self.sessions[server_filename].initialize()
 
@@ -241,10 +246,12 @@ class MasterServerClient:
             for popen_id in self._sub_server_popens:
                 self._sub_server_popens[popen_id].terminate()
 
-        if self._session_contexts:
-            for context_id in self._session_contexts:
-                await self._session_contexts[context_id].__aexit__(None, None, None)
+        await self._exit_stack.aclose()
 
-        if self._streams_contexts:
-            for context_id in self._session_contexts:
-                await self._streams_contexts[context_id].__aexit__(None, None, None)
+        # if self._session_contexts:
+        #     for context_id in self._session_contexts:
+        #         await self._session_contexts[context_id].__aexit__(None, None, None)
+        #
+        # if self._streams_contexts:
+        #     for context_id in self._session_contexts:
+        #         await self._streams_contexts[context_id].__aexit__(None, None, None)
