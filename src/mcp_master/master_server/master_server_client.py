@@ -132,6 +132,11 @@ class MasterServerClient:
 
     async def connect_to_server(self, server_url: str, server_filename: str, headers: dict = {}):
         """Connect to an MCP server running on streamable HTTP"""
+        # Exit if the server_filename is a duplicate
+        if server_filename in self.sessions:
+            logging.warning(f"Connection to {server_filename} aborted as it mirrors an existing server_filename.")
+            return
+
         # Exit if the server is not running despite attempts to start it
         if not await self.check_if_server_running(server_url, server_filename):
             logging.error(f"Failed to connect to server {server_filename} at {server_url}.")
