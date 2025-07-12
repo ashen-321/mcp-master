@@ -140,7 +140,6 @@ class MasterServerClient:
         # Initialize client and session
         client = await self._exit_stack.enter_async_context(streamablehttp_client(url=server_url, headers=headers))
         self._streams_contexts[server_filename] = client
-        print(client)
         read_stream, write_stream, _ = client
 
         session = await self._exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
