@@ -1,5 +1,5 @@
-from src.mcp_master import MasterMCPServer
-from src.mcp_master import global_config as gconfig
+from mcp_master import MasterMCPServer
+from mcp_master import global_config as gconfig
 from os import getenv
 
 gconfig.selector_model_id = ''  # Set this to your tool selector model ID

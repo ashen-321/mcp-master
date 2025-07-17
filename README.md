@@ -1,9 +1,8 @@
 # mcp-master
-A Python package for master MCP servers.
 
 <div align="center">
 
-<strong>Python implementation of master MCP servers.</strong>
+<strong>A Python package for [master MCP servers](https://medium.com/@aaron.shen321/why-you-need-a-master-for-your-mcp-servers-1c294be6bfc8).</strong>
 
 [![PyPI][pypi-badge]][pypi-url]
 [![MIT licensed][mit-badge]][mit-url]
@@ -87,7 +86,7 @@ python master_server.py
 
 [MCP clients](https://modelcontextprotocol.io/quickstart/client) utilizing the streamable-HTTP protocol can connect to master MCP servers without any modification. Details provided in the URL.
 
-For a complete working example, see [the MCP GitHub repository](https://github.com/modelcontextprotocol/python-sdk/blob/main/src/mcp/client/streamable_http.py).
+For a complete working example of an MCP client, see [the MCP GitHub repository](https://github.com/modelcontextprotocol/python-sdk/blob/main/src/mcp/client/streamable_http.py).
 
 ## License
 

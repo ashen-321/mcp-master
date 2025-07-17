@@ -7,8 +7,8 @@ from typing import Any
 
 from .tools import openai_url_invoke
 from .agent_protocol import MultiAgentState
-from src.mcp_master.config import global_config as gconfig
-from src.mcp_master.config import ConfigError
+from mcp_master.config import global_config as gconfig
+from mcp_master.config import ConfigError
 
 # --------------------------------------------------------------------------------------------
 # Config -------------------------------------------------------------------------------------

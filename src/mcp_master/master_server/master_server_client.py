@@ -8,8 +8,8 @@ import logging
 from subprocess import Popen
 from contextlib import AsyncExitStack
 
-from src.mcp_master.config import global_config as gconfig
-from src.mcp_master.orchestration.agents import config as agent_config
+from mcp_master.config import global_config as gconfig
+from mcp_master.orchestration.agents import config as agent_config
 
 
 # --------------------------------------------------------------------------------------------

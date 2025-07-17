@@ -8,8 +8,8 @@ from mcp.server.sse import SseServerTransport
 from starlette.routing import Mount, Route
 
 from .master_server_client import MasterServerClient
-from src.mcp_master.orchestration import Orchestration
-from src.mcp_master.orchestration.agents import config as agent_config
+from mcp_master.orchestration import Orchestration
+from mcp_master.orchestration.agents import config as agent_config
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

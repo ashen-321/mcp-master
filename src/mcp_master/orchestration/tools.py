@@ -1,5 +1,5 @@
 from openai import OpenAI
-from src.mcp_master.config import ConfigError
+from mcp_master.config import ConfigError
 
 
 # --------------------------------------------------------------------------------------------
