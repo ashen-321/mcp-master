@@ -10,6 +10,7 @@ from starlette.routing import Mount, Route
 from .master_server_client import MasterServerClient
 from mcp_master.orchestration import Orchestration
 from mcp_master.orchestration.agents import config as agent_config
+from mcp_master.orchestration.agent_protocol import MultiAgentState
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -25,7 +26,7 @@ class MasterMCPServer:
         self.master_server_client = None
 
         # Hosting port for the master server
-        self.port = port
+        self.port: int = port
 
         # ("url", "servername") pairs to connect to servers with
         self.sub_servers = sub_servers
@@ -33,21 +34,45 @@ class MasterMCPServer:
         # Initialize orchestration graph
         self.orch = Orchestration()
 
+        # Initialize request-response memory
+        self.memory: dict[int] = {}
+
         @self.app.tool()
         async def access_sub_mcp(query: str, ctx: Context | None = None):
-            logging.info(f'Collecting tool information for query: {query}')
-            logging.info(f'Tool called with context: {ctx.request_id} {ctx.client_id} {ctx.session_id}')
+            # Get session ID of client session using built-in id()
+            session_id = None
+            if ctx is not None:
+                session_id = id(ctx)
 
+            logging.info(f'Collecting tool information from session ID {session_id} for query: {query}')
+
+            # Prepare orchestration invoke config
             agent_config.tools = self.master_server_client.available_tools_flattened
             agent_config.master_server_client = self.master_server_client
 
+            # Invoke orchestration to pick tools
             result = await self.orch.graph.ainvoke(
                 {"question": query},
                 {"recursion_limit": 30},
             )
             logging.info(f'Orchestration result: {result}')
 
-            return result.get('external_data')
+            # Retrieve tool responses and store to memory
+            answer = result.get('external_data')
+
+            if session_id is not None:
+                self.store_request_to_memory(session_id, result)
+
+            return answer
+
+    def store_request_to_memory(self, session_id: int, result: MultiAgentState):
+        if session_id not in self.memory:
+            self.memory[session_id] = []
+
+        self.memory[session_id].extend([
+            {"role": "user", "content": result.get('external_data')},
+            {"role": "assistant", "content": result.get('external_data')},
+        ])
 
     def create_starlette_app(self, mcp_server: Server, *, debug: bool = False) -> Starlette:
         """Create a Starlette application that can serve the provided mcp server with SSE."""

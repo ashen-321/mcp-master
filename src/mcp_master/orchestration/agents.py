@@ -55,11 +55,14 @@ async def tools_selector_node(state: MultiAgentState):
     # Exit for empty API key
     if gconfig.OPENAI_BASE_URL is not None:
         if len(gconfig.OPENAI_BASE_URL) == 0:
-            raise ConfigError(
-                f'Ensure your OPENAI_BASE_URL is properly configured via set_config(). It is currently empty.')
+            raise ConfigError(f'Ensure your OPENAI_BASE_URL is properly configured via set_config(). It is currently empty.')
 
         # Save API key to environment variables
         os.environ["OPENAI_BASE_URL"] = gconfig.OPENAI_BASE_URL
+
+    # Exit for no tools available
+    if len(config.tools) == 0:
+        raise Exception('No tools available to make selections from. Ensure sub-servers exist and are functioning properly.')
 
     # Initialize openAI chat client
     if openai_client is None:
