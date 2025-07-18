@@ -1,6 +1,4 @@
-import os
 from pydantic import BaseModel
-from typing import Optional
 
 
 class GlobalConfig(BaseModel):
@@ -17,15 +15,10 @@ class GlobalConfig(BaseModel):
     OPENAI_API_KEY: str = ''
 
     # OpenAI Base URL
-    OPENAI_BASE_URL: Optional[str] = None
+    OPENAI_BASE_URL: str | None = None
 
     # Autostart path for locally available servers, defaulted to ../../../examples/demo-servers
-    autostart_abspath: str = os.path.normpath(
-        os.path.join(os.path.dirname(__file__), '..', '..', 'examples', 'demo-servers')
-    )
-
-    # Whether a token is required for access
-    private: bool = False
+    autostart_abspath: str | None = None
 
 
 global_config = GlobalConfig()

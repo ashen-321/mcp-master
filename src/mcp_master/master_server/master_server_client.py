@@ -8,7 +8,7 @@ import logging
 from subprocess import Popen
 from contextlib import AsyncExitStack
 
-from mcp_master.config import global_config as gconfig
+from mcp_master import global_config as gconfig
 from mcp_master.orchestration.agents import config as agent_config
 
 
@@ -56,7 +56,7 @@ class MasterServerClient:
         # FastMCP app
         self._app = app
 
-        #
+        # Exit stack for clients and sessions
         self._exit_stack = AsyncExitStack()
 
     async def check_if_server_running(self, server_url: str, server_filename: str):
@@ -77,6 +77,13 @@ class MasterServerClient:
 
         except (httpx.TimeoutException, httpx.ConnectError) as e:
             logging.warning(f"HTTP request attempt failed: {type(e).__name__}: {e}")
+
+            # Exit if gconfig.autostart_abspath is None
+            logging.info(gconfig.model_dump())
+            logging.info(f'{gconfig.autostart_abspath} {gconfig.selector_model_id}')
+            if gconfig.autostart_abspath is None:
+                logging.info(f"No autostart path provided.")
+                return False
 
             # Exit if the server_path is not absolute
             server_dir = os.path.join(gconfig.autostart_abspath)

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from fastmcp import FastMCP
+from fastmcp import FastMCP, Context
 from mcp.server import Server
 from starlette.requests import Request
 from starlette.applications import Starlette
@@ -34,8 +34,9 @@ class MasterMCPServer:
         self.orch = Orchestration()
 
         @self.app.tool()
-        async def access_sub_mcp(query: str):
+        async def access_sub_mcp(query: str, ctx: Context | None = None):
             logging.info(f'Collecting tool information for query: {query}')
+            logging.info(f'Tool called with context: {ctx.request_id} {ctx.client_id} {ctx.session_id}')
 
             agent_config.tools = self.master_server_client.available_tools_flattened
             agent_config.master_server_client = self.master_server_client
