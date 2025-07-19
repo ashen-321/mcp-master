@@ -52,7 +52,7 @@ class MasterMCPServer:
 
             # Invoke orchestration to pick tools
             result = await self.orch.graph.ainvoke(
-                {"question": query},
+                {"question": query, 'session_memory': self.memory.get(session_id, [])},
                 {"recursion_limit": 30},
             )
             logging.info(f'Orchestration result: {result}')
@@ -70,7 +70,7 @@ class MasterMCPServer:
             self.memory[session_id] = []
 
         self.memory[session_id].extend([
-            {"role": "user", "content": result.get('external_data')},
+            {"role": "user", "content": result.get('question')},
             {"role": "assistant", "content": result.get('external_data')},
         ])
 

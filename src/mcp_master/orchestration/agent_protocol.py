@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 class MultiAgentState(BaseModel):
     question: str
+    session_memory: list
     external_data: list = []
     external_summaries: list = []
     data_sources: list = []

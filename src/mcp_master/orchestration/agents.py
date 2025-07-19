@@ -71,6 +71,7 @@ async def tools_selector_node(state: MultiAgentState):
     # Select tools
     messages = [
         {"role": "system", "content": config.dispatcher_system_message},
+        *state.session_memory,
         {"role": "user", "content": state.question},
     ]
 
