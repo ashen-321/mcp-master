@@ -249,11 +249,3 @@ class MasterServerClient:
                 self._sub_server_popens[popen_id].terminate()
 
         await self._exit_stack.aclose()
-
-        if self._session_contexts:
-            for context_id in self._session_contexts:
-                await self._session_contexts[context_id].__aexit__(None, None, None)
-
-        if self._streams_contexts:
-            for context_id in self._session_contexts:
-                await self._streams_contexts[context_id].__aexit__(None, None, None)
