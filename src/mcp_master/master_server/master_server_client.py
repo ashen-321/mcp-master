@@ -234,7 +234,6 @@ class MasterServerClient:
                 self.available_tools[server_filename].remove(tool_name)
 
             logging.error(f"Tool {tool_name} from {server_filename} is currently unavailable:")
-            raise Exception(e)
 
     async def server_loop(self):
         while True:
@@ -251,10 +250,10 @@ class MasterServerClient:
 
         await self._exit_stack.aclose()
 
-        # if self._session_contexts:
-        #     for context_id in self._session_contexts:
-        #         await self._session_contexts[context_id].__aexit__(None, None, None)
-        #
-        # if self._streams_contexts:
-        #     for context_id in self._session_contexts:
-        #         await self._streams_contexts[context_id].__aexit__(None, None, None)
+        if self._session_contexts:
+            for context_id in self._session_contexts:
+                await self._session_contexts[context_id].__aexit__(None, None, None)
+
+        if self._streams_contexts:
+            for context_id in self._session_contexts:
+                await self._streams_contexts[context_id].__aexit__(None, None, None)
