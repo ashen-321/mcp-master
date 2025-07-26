@@ -1,16 +1,10 @@
 import asyncio
 import logging
-from fastmcp import FastMCP, Context
-from mcp.server import Server
-from starlette.requests import Request
-from starlette.applications import Starlette
-from mcp.server.sse import SseServerTransport
-from starlette.routing import Mount, Route
+from fastmcp import FastMCP
 
 from .master_server_client import MasterServerClient
 from mcp_master.orchestration import Orchestration
 from mcp_master.orchestration.agents import config as agent_config
-from mcp_master.orchestration.agent_protocol import MultiAgentState
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -95,4 +89,4 @@ if __name__ == "__main__":
             ("http://localhost:8092/mcp", 'test_server_2')
         ]
     )
-    asyncio.run(server.startup())
+    server.startup()
