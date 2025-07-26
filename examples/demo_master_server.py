@@ -1,4 +1,4 @@
-from mcp_master import MasterMCPServer
+from mcp_master import MasterMCPServer, SubServer
 from mcp_master import global_config as gconfig
 from os import getenv, path
 
@@ -14,10 +14,10 @@ gconfig.autostart_abspath = path.normpath(path.join(path.dirname(__file__), 'dem
 server = MasterMCPServer(
     port=3000,
     sub_servers=[
-        # (server url, server identifier) pairs - ensure all server identifiers are unique
+        # Ensure all server identifiers are unique
         # If the server is located locally (as the demo servers are), ensure the server identifier matches the server's file name (without the .py)
-        ("http://localhost:8091/mcp", 'test_server_1'),
-        ("http://localhost:8092/mcp", 'test_server_2')
+        SubServer(url="http://localhost:8091/mcp", identifier='test_server_1'),
+        SubServer(url="http://localhost:8092/mcp", identifier='test_server_2')
     ]
 )
 server.startup()

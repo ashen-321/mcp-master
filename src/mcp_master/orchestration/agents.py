@@ -6,8 +6,8 @@ from pydantic import BaseModel
 from typing import Any
 
 from .agent_protocol import MultiAgentState
-from mcp_master.config import global_config as gconfig
-from mcp_master.config import ConfigError
+from ..config import global_config as gconfig
+from ..config import ConfigError
 
 # --------------------------------------------------------------------------------------------
 # Config -------------------------------------------------------------------------------------

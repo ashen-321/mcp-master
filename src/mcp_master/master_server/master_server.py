@@ -2,9 +2,9 @@ import asyncio
 import logging
 from fastmcp import FastMCP
 
-from .master_server_client import MasterServerClient
-from mcp_master.orchestration import Orchestration
-from mcp_master.orchestration.agents import config as agent_config
+from .master_server_client import MasterServerClient, SubServer
+from ..orchestration import Orchestration
+from ..orchestration.agents import config as agent_config
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -12,7 +12,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Initialize FastMCP server
 class MasterMCPServer:
-    def __init__(self, port: int = 3000, sub_servers: list[tuple] = []):
+    def __init__(self, port: int = 3000, sub_servers: list[SubServer] | None = None):
+        if sub_servers is None:
+            sub_servers = []
+
         # FastMCP server
         self.app = FastMCP("master_server")
 
@@ -22,7 +25,7 @@ class MasterMCPServer:
         # Hosting port for the master server
         self.port: int = port
 
-        # ("url", "servername") pairs to connect to servers with
+        # SubServer instances to connect to servers with
         self.sub_servers = sub_servers
 
         # Initialize orchestration graph
@@ -53,8 +56,8 @@ class MasterMCPServer:
         self.master_server_client = MasterServerClient(self.app)
 
         try:
-            for server in self.sub_servers:
-                await self.master_server_client.connect_to_server(*server)
+            for sub_server in self.sub_servers:
+                await self.master_server_client.connect_to_server(sub_server)
 
             await self.master_server_client.server_loop()
         except KeyboardInterrupt:

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 import os
@@ -7,9 +7,10 @@ import httpx
 import logging
 from subprocess import Popen
 from contextlib import AsyncExitStack
+from pydantic import BaseModel
 
-from mcp_master import global_config as gconfig
-from mcp_master.orchestration.agents import config as agent_config
+from ..config import global_config as gconfig
+from ..orchestration.agents import config as agent_config
 
 
 # --------------------------------------------------------------------------------------------
@@ -26,6 +27,20 @@ MASTER_DISPATCHER_SYSTEM_HEADER = (
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+# --------------------------------------------------------------------------------------------
+# Sub-Server Class ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
+
+
+class SubServer(BaseModel):
+    url: str
+    identifier: str
+    headers: dict | None = None
+
+    def __init__(self, /, **data: Any):
+        super().__init__(**data)
 
 
 # --------------------------------------------------------------------------------------------
@@ -59,13 +74,13 @@ class MasterServerClient:
         # Exit stack for clients and sessions
         self._exit_stack = AsyncExitStack()
 
-    async def check_if_server_running(self, server_url: str, server_filename: str):
+    async def check_if_server_running(self, server: SubServer):
         try:
             # Send request to see if the server is already running
             async with httpx.AsyncClient(timeout=30.0) as client:
-                logging.info(f"HTTP GET attempt to {server_url}")
+                logging.info(f"HTTP GET attempt to {server.url}")
 
-                response = await client.get(server_url)
+                response = await client.get(server.url)
                 response.raise_for_status()
 
                 # Exit if already running
@@ -79,38 +94,36 @@ class MasterServerClient:
             logging.warning(f"HTTP request attempt failed: {type(e).__name__}: {e}")
 
             # Exit if gconfig.autostart_abspath is None
-            logging.info(gconfig.model_dump())
-            logging.info(f'{gconfig.autostart_abspath} {gconfig.selector_model_id}')
             if gconfig.autostart_abspath is None:
                 logging.info(f"No autostart path provided.")
                 return False
 
             # Exit if the server_path is not absolute
-            server_dir = os.path.join(gconfig.autostart_abspath)
+            server_dir = str(os.path.join(gconfig.autostart_abspath))
             os.chdir(server_dir)
             if not os.path.isabs(server_dir):
                 logging.info(f"{server_dir} is not an absolute path.")
                 return False
 
             # Exit if the server is not present in the folder
-            server_path = os.path.normpath(os.path.join(server_dir, f'{server_filename}.py'))
+            server_path = os.path.normpath(os.path.join(server_dir, f'{server.identifier}.py'))
             if not os.path.exists(server_path):
-                logging.info(f"Unable to find server {server_filename} in {server_path}.")
+                logging.info(f"Unable to find server {server.identifier} in {server_path}.")
                 return False
 
             # Run start command to start the server
-            logging.info(f"Sending start command for {server_filename}...")
-            start_popen = Popen(['python', f'{server_filename}.py'])
-            self._sub_server_popens[server_filename] = start_popen
+            logging.info(f"Sending start command for {server.identifier}...")
+            start_popen = Popen(['python', f'{server.identifier}.py'])
+            self._sub_server_popens[server.identifier] = start_popen
 
             # Wait for the server to start, abort after 10 seconds
             attempt_count = 1
             async with httpx.AsyncClient(timeout=10.0) as client:
                 while True:
                     try:
-                        logging.debug(f"HTTP GET attempt to {server_url}")
+                        logging.debug(f"HTTP GET attempt to {server.url}")
 
-                        response = await client.get(server_url)
+                        response = await client.get(server.url)
                         response.raise_for_status()
 
                         # Exit if running
@@ -137,33 +150,35 @@ class MasterServerClient:
             logging.error(f"Unexpected error in HTTP request: {e}")
             return False
 
-    async def connect_to_server(self, server_url: str, server_filename: str, headers: dict = {}):
-        """Connect to an MCP server running on streamable HTTP"""
+    async def connect_to_server(self, server: SubServer):
+        if server.headers is None:
+            server.headers = {}
+
         # Exit if the server_filename is a duplicate
-        if server_filename in self.sessions:
-            logging.warning(f"Connection to {server_filename} aborted as it mirrors an existing server_filename.")
+        if server.identifier in self.sessions:
+            logging.warning(f"Connection to {server.identifier} aborted as it mirrors an existing server_filename.")
             return
 
         # Exit if the server is not running despite attempts to start it
-        if not await self.check_if_server_running(server_url, server_filename):
-            logging.error(f"Failed to connect to server {server_filename} at {server_url}.")
+        if not await self.check_if_server_running(server):
+            logging.error(f"Failed to connect to server {server.identifier} at {server.url}.")
             return
 
         # Initialize client and session
-        client = await self._exit_stack.enter_async_context(streamablehttp_client(url=server_url, headers=headers))
-        self._streams_contexts[server_filename] = client
+        client = await self._exit_stack.enter_async_context(streamablehttp_client(url=server.url, headers=server.headers))
+        self._streams_contexts[server.identifier] = client
         read_stream, write_stream, _ = client
 
         session = await self._exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
-        self._session_contexts[server_filename] = session
-        self.sessions[server_filename] = session
+        self._session_contexts[server.identifier] = session
+        self.sessions[server.identifier] = session
 
-        await self.sessions[server_filename].initialize()
+        await self.sessions[server.identifier].initialize()
 
         # Save the sub server's available tools
-        await self.get_available_tools(server_filename)
+        await self.get_available_tools(server.identifier)
 
-        logging.info(f"Connected to server {server_filename} at {server_url}.")
+        logging.info(f"Connected to server {server.identifier} at {server.url}.")
 
     async def get_available_tools(self, server_filename: str):
         """Get available tools from the server"""
@@ -213,7 +228,7 @@ class MasterServerClient:
                 dispatcher_system_message += f'\n - {tool['function']['name']}: {tool['function']['description']}'
 
         # Save description directly to tool
-        logging.info(f"Compiled description: {tool_description}")
+        logging.info(f"Compiled description:\n{tool_description}")
         self._app._tool_manager._tools.get('access_sub_mcp').description = tool_description
 
         # Save dispatcher node system message to orchestration
