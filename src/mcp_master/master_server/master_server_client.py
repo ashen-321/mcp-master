@@ -119,7 +119,7 @@ class MasterServerClient:
             # Wait for the server to start, abort after 10 seconds
             attempt_count = 1
             async with httpx.AsyncClient(timeout=10.0) as client:
-                while True:
+                while attempt_count <= 20:
                     try:
                         logging.debug(f"HTTP GET attempt to {server.url}")
 

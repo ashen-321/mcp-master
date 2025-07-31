@@ -140,7 +140,7 @@ async def tools_selector_node(state: MultiAgentState):
         state.messages.append({"role": "assistant", "content": str(external_data)})
 
         logging.info(f'Tool results: {external_data}')
-        return {'tools_requested': tool_calls, 'external_data': str(external_data)}
+        return {'tools_requested': tool_calls, 'external_data': external_data}
 
     # Safety in case the model chooses to generate its own response
     response = response.choices[0].message.content
@@ -149,7 +149,7 @@ async def tools_selector_node(state: MultiAgentState):
     state.messages.append({"role": "assistant", "content": response})
 
     logging.info(f'Model-generated response: {response}')
-    return {'tools_requested': None, 'external_data': response}
+    return {'tools_requested': None, 'external_data': [response]}
 
 
 def judge_node(state: MultiAgentState):

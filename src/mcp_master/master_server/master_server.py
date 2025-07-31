@@ -88,8 +88,8 @@ if __name__ == "__main__":
     server = MasterMCPServer(
         port=3000,
         sub_servers=[
-            ("http://localhost:8091/mcp", 'test_server_1'),
-            ("http://localhost:8092/mcp", 'test_server_2')
+            SubServer(url="http://localhost:8091/mcp", identifier='test_server_1'),
+            SubServer(url="http://localhost:8092/mcp", identifier='test_server_2')
         ]
     )
     server.startup()
