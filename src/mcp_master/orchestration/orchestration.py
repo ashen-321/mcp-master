@@ -22,7 +22,7 @@ class Orchestration:
             judge_decision,
             {
                 'GOOD': END,
-                'BAD': END  # 'tools_selector_node'
+                'BAD': 'tools_selector_node'
             }
         )
 

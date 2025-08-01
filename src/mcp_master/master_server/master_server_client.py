@@ -19,7 +19,11 @@ from ..orchestration.agents import config as agent_config
 
 
 TOOL_NAME_ORIGIN_SEPARATOR = '09090'
-MASTER_TOOL_DESCRIPTION_HEADER = 'Automatically interface with other MCP servers for the following tools:'
+MASTER_TOOL_DESCRIPTION_HEADER = (
+    'Automatically interface with other MCP servers for the following tools. Be sure to include as much detail as '
+    'possible, so other AI agents can make the best decision as to what MCP server best fits your request. The tools '
+    'are as follows:'
+)
 MASTER_DISPATCHER_SYSTEM_HEADER = (
     "You are a tool dispatcher agent who decides which tools to dispatch to based on the user's input. Depending on "
     "your answer, question will be routed to the right tools, so your task is crucial."

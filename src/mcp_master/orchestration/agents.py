@@ -1,4 +1,6 @@
 import os
+
+from mcp.types import TextContent, ImageContent, AudioContent
 from openai import OpenAI
 import logging
 from asyncio import gather
@@ -124,7 +126,7 @@ async def tools_selector_node(state: MultiAgentState):
     tool_calls = response.choices[0].message.tool_calls
     logging.info(f'Selected tools: {tool_calls}')
 
-    # Call selected tools
+    # Call selected tools in parallel
     if tool_calls:
         tool_callables = [
             config.master_server_client.call_tool(
@@ -134,7 +136,16 @@ async def tools_selector_node(state: MultiAgentState):
         ]
 
         results = await gather(*tool_callables)
-        external_data = [result.content[0].text for result in results]
+        external_data = []
+        for result in results:
+            for content in result.content:
+                # Text responses
+                if isinstance(content, TextContent):
+                    external_data.append(content.text)
+
+                # Image and audio responses will be supported soon
+                if isinstance(content, (ImageContent, AudioContent)):
+                    pass
 
         # Save tool response to messages
         state.messages.append({"role": "assistant", "content": str(external_data)})
