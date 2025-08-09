@@ -1,10 +1,5 @@
 import logging
 from fastmcp import FastMCP
-from mcp.server import Server
-from starlette.requests import Request
-from starlette.applications import Starlette
-from mcp.server.sse import SseServerTransport
-from starlette.routing import Mount, Route
 
 
 # Set up logging
